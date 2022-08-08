@@ -13,7 +13,13 @@
         </ul>
         <router-view></router-view>
     </div>
+    App: pinia store is {{ counterStore.count }}
 </template>
 
 <script lang="ts" setup>
+import { useCounterStore } from './stores/counter'
+
+const counterStore = useCounterStore()
+
+
 </script>
