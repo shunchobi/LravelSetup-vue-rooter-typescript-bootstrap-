@@ -1,0 +1,244 @@
+Laravel with Vue + VueRouter + Pinia + TypeScript + Bootstrap
+
+
+```sql
+composer create-project laravel/laravel demo-vite-plugin
+cd demo-vite-plugin
+
+======================================
+xs 
+
+// sail をインストールする
+composer require --dev laravel/sail
+php artisan sail:install # --> mysql 選択
+
+======================================
+
+./vendor/bin/sail up -d　# sail 起動
+
+./vendor/bin/sail npm install
+./vendor/bin/sail npm i vite laravel-vite-plugin @vitejs/plugin-vue sass bootstrap @popperjs/core vue@next pinia --save-dev
+```
+
+**./vite.config.js を ./vite.config.ts へ名前変更し以下をコピペ**
+
+```sql
+import { defineConfig } from "vite";
+import laravel from "laravel-vite-plugin";
+import vue from "@vitejs/plugin-vue";
+import path from "path";
+
+export default defineConfig({
+    plugins: [
+        laravel({
+            input: ["resources/scss/app.scss", "resources/js/app.ts"],
+            refresh: true,
+        }),
+        vue(),
+    ],
+    server: {
+        hmr: {
+            host: "localhost",
+        },
+    },
+    resolve: {
+        alias: {
+            "~bootstrap": path.resolve(__dirname, "node_modules/bootstrap"),
+        }
+    },
+});
+```
+
+[https://github.com/laravel/vite-plugin/issues/28#issuecomment-1169592126](https://github.com/laravel/vite-plugin/issues/28#issuecomment-1169592126)
+
+./**resources/js/app.jsをapp.tsに名前変更して以下をコピペ**
+
+```sql
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router/router';
+import { createPinia } from 'pinia'
+
+createApp(App).use(router).use(createPinia()).mount('#app');
+```
+
+./**resources/js/App.vue**
+
+```sql
+<template>
+    <div>
+        <ul>
+            <li>
+                <router-link to="/">Home</router-link>
+            </li>
+            <li>
+                <router-link to="/foo">Foo</router-link>
+            </li>
+            <li>
+                <router-link to="/bar">Bar</router-link>
+            </li>
+        </ul>
+        <router-view></router-view>
+    </div>
+</template>
+
+<script lang="ts" setup>
+</script>
+```
+
+welcome.blade.php
+
+```sql
+<!doctype html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        @vite(['resources/scss/app.scss', 'resources/js/app.ts'])
+    </head>
+    <body>
+        <h1 class="text-danger">
+            Laravel Vue VueRouter TypeScript Bootstrap
+        </h1>
+        <div id="app">
+        </div>
+    </body>
+</html>
+```
+
+./**resources/sass/app.scss ← フォルダ名ファイル名をこれに変更**
+
+```java
+@import "~bootstrap/scss/bootstrap";
+```
+
+**vue routerをインストール**
+
+```jsx
+./vendor/bin/sail npm i vue-router -s
+```
+
+**typescriptをインストール**
+
+```jsx
+./vendor/bin/sail npm i typescript --save-dev
+```
+
+**./tsconfig.node.json**
+
+```jsx
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+```
+
+**./tsconfig.json**
+
+```jsx
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true
+  },
+  "include": ["references/**/*.ts", "references/**/*.d.ts", "references/**/*.tsx", "references/**/*.vue"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+**./resources/js/vite-env.d.ts**
+
+```jsx
+declare module '*.vue' {
+  import type { DefineComponent } from 'vue'
+  const component: DefineComponent<{}, {}, any>
+  export default component
+}
+```
+
+**./resources/js/router/router.ts ファイルを作成**
+
+```jsx
+import * as VueRouter from "vue-router";
+
+import Home from '../views/Home.vue';
+import Foo from '../views/Foo.vue';
+import Bar from '../views/Bar.vue';
+
+// パスとコンポーネントのマッピング
+const routes = [
+  { path: '/', component: Home },
+  { path: '/bar', component: Bar },
+  { path: '/foo', component: Foo },
+]
+
+const router = VueRouter.createRouter({
+  history: VueRouter.createWebHashHistory(),
+  routes, // short for `routes: routes`
+})
+
+export default router;
+```
+
+**./resources/js/views/Home.vue, Foo.vue, Bar.vueの3つのファイルを作成**
+
+```jsx
+<template>
+    <div>
+        <h1>
+            this is home view  // 名前は各ファイル名に変更
+        </h1>
+    </div>
+</template>
+```
+
+./resources/js/stores/counter.ts を作成
+
+```jsx
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+
+export const useCounterStore = defineStore('counter', () => {
+    const count = ref(999)
+    function increment() {
+      count.value++
+    }
+  
+    return { count, increment }
+  })
+```
+
+counter.tsで定義したcounterデータを使用したいvueファイルで以下のようにデータにアクセスし使用できる
+
+```jsx
+<template>
+{{ counterStore.count }}
+</template>
+
+<script lang="ts" setup>
+
+import { useCounterStore } from './stores/counter'
+const counterStore = useCounterStore()
+
+</script>
+```
+
+**npm install, npm run dev をしてlocalhostにアクセス**
+
+```jsx
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run dev
+```
